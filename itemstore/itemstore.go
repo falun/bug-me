@@ -1,8 +1,14 @@
 package itemstore
 
 type ItemStore interface {
-	List(filters ...ItemFilter) ([]Item, error)
+	List(opts *ListOptions, filters ...ItemFilter) ([]Item, PagingData, error)
 	Get(id string) (Item, error)
+}
+
+type Pager interface {
+	HasNext(PagingData) (bool, error)
+	Next(PagingData) ([]Item, error)
+	Prev(PagingData) ([]Item, error)
 }
 
 type Item interface {
@@ -15,5 +21,6 @@ type Item interface {
 
 type Label string
 
-type ItemFilter interface {
-}
+type ListOptions struct{}
+
+type ItemFilter interface{}
