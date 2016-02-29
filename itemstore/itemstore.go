@@ -1,16 +1,5 @@
 package itemstore
 
-type ItemStore interface {
-	List(opts *ListOptions, filters ...ItemFilter) ([]Item, PagingData, error)
-	Get(id string) (Item, error)
-}
-
-type Pager interface {
-	HasNext(PagingData) (bool, error)
-	Next(PagingData) ([]Item, error)
-	Prev(PagingData) ([]Item, error)
-}
-
 type Item interface {
 	Id() string
 	Labels() ([]Label, error)
@@ -19,8 +8,33 @@ type Item interface {
 	RemoveLabel(label Label)
 }
 
+type ItemStore interface {
+	Get(id string) (Item, error)
+	Add(item Item) error
+
+	List(opts *ListOptions, filters ...ItemFilter) ([]Item, PagingData, error)
+
+	Pager() Pager
+}
+
+type Pager interface {
+	Next(PagingData) ([]Item, error)
+	Prev(PagingData) ([]Item, error)
+}
+
+type PagingData struct {
+	More bool
+	Prev string
+	Next string
+}
+
 type Label string
 
-type ListOptions struct{}
+type ListOptions struct {
+	PageSize int
+}
 
-type ItemFilter interface{}
+type ItemFilter interface {
+	And(ItemFilter) ItemFilter
+	Or(ItemFilter) ItemFilter
+}
