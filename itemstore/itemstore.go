@@ -1,13 +1,7 @@
 package itemstore
 
-type ItemStore interface {
-	Get(id string) (Item, error)
-	Add(item Item) error
-
-	List(opts *ListOptions, filters ...ItemFilter) (Items, PagingData, error)
-
-	Pager() Pager
-}
+type ItemID string
+type ItemIDs []ItemID
 
 type Items []Item
 type Item interface {
@@ -17,9 +11,22 @@ type Item interface {
 	AddLabel(label Label)
 	RemoveLabel(label Label)
 
-	// special relationships
-	Parent() (Item, error)
-	Children() (Items, error)
+	// special relationships and attributes
+
+	Parent() (ItemID, error)
+	Children() (ItemIDs, error)
+	Priority() int
+}
+
+type ItemStore interface {
+	Add(item Item) error
+	Get(id ItemID) (Item, error)
+	Update(newItem ItemID) error
+	Remove(id ItemID) error
+
+	List(opts *ListOptions, filter ItemFilter) (Items, PagingData, error)
+
+	Pager() Pager
 }
 
 type Pager interface {
@@ -37,9 +44,4 @@ type Label string
 
 type ListOptions struct {
 	PageSize int
-}
-
-type ItemFilter interface {
-	And(ItemFilter) ItemFilter
-	Or(ItemFilter) ItemFilter
 }
