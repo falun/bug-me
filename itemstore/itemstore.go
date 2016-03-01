@@ -1,25 +1,30 @@
 package itemstore
 
+type ItemStore interface {
+	Get(id string) (Item, error)
+	Add(item Item) error
+
+	List(opts *ListOptions, filters ...ItemFilter) (Items, PagingData, error)
+
+	Pager() Pager
+}
+
+type Items []Item
 type Item interface {
 	Id() string
 	Labels() ([]Label, error)
 
 	AddLabel(label Label)
 	RemoveLabel(label Label)
-}
 
-type ItemStore interface {
-	Get(id string) (Item, error)
-	Add(item Item) error
-
-	List(opts *ListOptions, filters ...ItemFilter) ([]Item, PagingData, error)
-
-	Pager() Pager
+	// special relationships
+	Parent() (Item, error)
+	Children() (Items, error)
 }
 
 type Pager interface {
-	Next(PagingData) ([]Item, error)
-	Prev(PagingData) ([]Item, error)
+	Next(PagingData) (Items, error)
+	Prev(PagingData) (Items, error)
 }
 
 type PagingData struct {
