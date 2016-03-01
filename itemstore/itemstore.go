@@ -17,7 +17,13 @@ type Item interface {
 
 	AddLabel(label Label)
 	RemoveLabel(label Label)
+
+	// special relationships
+	Parent() (Item, error)
+	Children() (Items, error)
 }
+
+type Items []Item
 
 type Label string
 
