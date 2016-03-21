@@ -9,43 +9,55 @@ const (
 
 type ItemTestFn func(Item) bool
 
-type ItemFilter struct {
-	Next            *ItemFilter
-	CombinationType CombinationType
-	test            ItemTestFn
+type Matcher interface {
+	Match(Item) bool
+	Or(Matcher) Matcher
+	And(Matcher) Matcher
 }
 
-func NewFilter(f ItemTestFn) ItemFilter {
-	return ItemFilter{test: f}
+var LeafTrue = Leaf{func(_ Item) bool { return true }}
+var LeafFalse = Leaf{func(_ Item) bool { return false }}
+
+type Leaf struct {
+	TestFn ItemTestFn
 }
 
-func (f ItemFilter) And(i ItemFilter) ItemFilter {
-	f.Next = &i
-	f.CombinationType = And
-	return f
+type Complex struct {
+	Left     Matcher
+	JoinType CombinationType
+	Right    Matcher
 }
 
-func (f ItemFilter) Or(i ItemFilter) ItemFilter {
-	f.Next = &i
-	f.CombinationType = Or
-	return f
+func NewFilter(f ItemTestFn) Matcher {
+	return Leaf{f}
 }
 
-// does this work for groups?
-func (f ItemFilter) Match(i Item) bool {
-	cur := f.test(i)
+func (l Leaf) Match(i Item) bool {
+	return l.TestFn(i)
+}
 
-	if f.Next == nil {
-		return cur
-	}
+func (l Leaf) And(r Matcher) Matcher {
+	return Complex{l, And, r}
+}
 
-	if f.CombinationType == And {
-		return cur && f.Next.Match(i)
-	}
+func (l Leaf) Or(r Matcher) Matcher {
+	return Complex{l, Or, r}
+}
 
-	if f.CombinationType == Or {
-		return cur || f.Next.Match(i)
+func (c Complex) Match(i Item) bool {
+	if c.JoinType == And {
+		return c.Left.Match(i) && c.Right.Match(i)
+	} else if c.JoinType == Or {
+		return c.Left.Match(i) || c.Right.Match(i)
 	}
 
 	panic("Unhandled filter combination type")
+}
+
+func (c Complex) And(r Matcher) Matcher {
+	return Complex{c, And, r}
+}
+
+func (c Complex) Or(r Matcher) Matcher {
+	return Complex{c, Or, r}
 }

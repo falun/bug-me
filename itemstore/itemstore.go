@@ -24,7 +24,7 @@ type ItemStore interface {
 	Update(newItem ItemID) error
 	Remove(id ItemID) error
 
-	List(opts *ListOptions, filter ItemFilter) (Items, PagingData, error)
+	List(opts *ListOptions, filter Matcher) (Items, PagingData, error)
 
 	Pager() Pager
 }
