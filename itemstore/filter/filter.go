@@ -1,59 +1,69 @@
 package filter
 
-type Tester interface {
-	Test(Item) bool
+import "github.com/falun/bug-me/itemstore"
+
+var True = itemstore.MatcherFromTester(TestTrue{})
+var False = itemstore.MatcherFromTester(TestFalse{})
+
+func Not(m itemstore.Matcher) itemstore.Matcher {
+	return itemstore.MatcherFromTester(TestNot{m})
 }
 
-type Matcher interface {
-	Match(Item) bool
-	Or(Matcher) Matcher
-	And(Matcher) Matcher
-}
+type TestTrue struct{}
+type TestFalse struct{}
+type TestNot struct{ Nested itemstore.Matcher }
 
-type terminal struct{ Test ItemTest }
-
-type Joined struct {
-	Left     Tester
-	JoinType CombinationType
-	Right    Tester
-}
-
-var True struct{}
-var False struct{}
-var TestNot struct{ Nested ItemTester }
-
-func (_ TestTrue) Test(_ Item) bool  { return true }
-func (_ TestFalse) Test(_ Item) bool { return false }
-func (tn TestNot) Test(i Item) bool  { return !tn.Nested.Test(i) }
+func (_ TestTrue) Test(_ itemstore.Item) bool  { return true }
+func (_ TestFalse) Test(_ itemstore.Item) bool { return false }
+func (tn TestNot) Test(i itemstore.Item) bool  { return !tn.Nested.Match(i) }
 
 type HasLabelTest struct{ Label string }
+type HasAnyLabelTest struct{ Labels []string }
+type HasAllLabelTest struct{ Labels []string }
 
-func HasLabel(label string) HasLabelTest {
-	return HasLabelTest{label}
+func HasLabel(label string) itemstore.Matcher {
+	return itemstore.MatcherFromTester(HasLabelTest{label})
 }
 
-func HasAnyLabel(labels ...string) Matcher {
-	if len(labels) == 0 {
-		return True
-	}
-
-	m := False
-	for _, l := range labels {
-		m = m.Or(HasLabel(l))
-	}
-
-	return m
+func (t HasLabelTest) Test(i itemstore.Item) bool {
+	l := i.Labels()
+	return l[t.Label]
 }
 
-func HasAllLabels(labels ...string) Matcher {
-	if len(labels) == 0 {
-		return True
+func HasAnyLabel(labels ...string) itemstore.Matcher {
+	return itemstore.MatcherFromTester(HasAnyLabelTest{labels})
+}
+
+func (t HasAnyLabelTest) Test(i itemstore.Item) bool {
+	if len(t.Labels) == 0 {
+		return true
 	}
 
-	m := True
-	for _, l := range labels {
-		m.And(HasLabel(l))
+	labels := i.Labels()
+	for _, l := range t.Labels {
+		if labels[l] {
+			return true
+		}
 	}
 
-	return m
+	return false
+}
+
+func HasAllLabels(labels ...string) itemstore.Matcher {
+	return itemstore.MatcherFromTester(HasAllLabelTest{labels})
+}
+
+func (t HasAllLabelTest) Test(i itemstore.Item) bool {
+	if len(t.Labels) == 0 {
+		return true
+	}
+
+	labels := i.Labels()
+	for _, l := range t.Labels {
+		if !labels[l] {
+			return false
+		}
+	}
+
+	return true
 }

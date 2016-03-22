@@ -6,15 +6,15 @@ type ItemIDs []ItemID
 type Items []Item
 type Item interface {
 	Id() string
-	Labels() ([]Label, error)
+	Labels() map[string]bool
 
-	AddLabel(label Label)
-	RemoveLabel(label Label)
+	AddLabel(label string)
+	RemoveLabel(label string)
 
 	// special relationships and attributes
 
-	Parent() (ItemID, error)
-	Children() (ItemIDs, error)
+	Parent() ItemID
+	Children() ItemIDs
 	Priority() int
 }
 
@@ -39,8 +39,6 @@ type PagingData struct {
 	Prev string
 	Next string
 }
-
-type Label string
 
 type ListOptions struct {
 	PageSize int
