@@ -12,14 +12,18 @@ const (
 	Or
 )
 
-// Matcher is the building block of a complex check.
+// Matcher the atom of an itemstore filter. It may be connected with other
+// matchers through methods And and Or.
 type Matcher interface {
+	// Test an item against this matcher. Returns true if the match is successful
 	Match(Item) bool
 	Or(Matcher) Matcher
 	And(Matcher) Matcher
 }
 
-// Joined is an implementation af a Matcher.
+// Joined is an implementation af a Matcher that represents multiple
+// operations joined through logical And/Or. It is the building block for more
+// complex logical operations constructions.
 type Joined struct {
 	Left     Matcher
 	JoinType CombinationType
