@@ -1,3 +1,9 @@
+// The filter package collects a set of basic filtering options that can be
+// used to make subselection over the set of items on the todo list.
+//
+// The intent is that each additional backend should handle these as they see
+// fit but to support both pre and post query processing. Post query filtering
+// is trivial and can be done by
 package filter
 
 import "github.com/falun/bug-me/itemstore"
